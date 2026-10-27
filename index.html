@@ -203,8 +203,15 @@
 
 <script>
     // Простой скрипт для "живого" таймера
-    let timeLeft = 660 * 60; // 30 минут в секундах
-    const display = document.getElementById('timer-display');
+            timeLeft--;
+        const hours = Math.floor(timeLeft / 3600);
+        const minutes = Math.floor((timeLeft % 3600) / 60);
+        
+        if (hours > 0) {
+            display.textContent = `${hours} ч. ${minutes} мин.`;
+        } else {
+            display.textContent = `${minutes} мин.`;
+        }
 
     setInterval(() => {
         if (timeLeft <= 0) {
