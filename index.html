@@ -336,7 +336,6 @@
       <div>
         <div style="font-size:20px; font-weight:900;" id="pName">Игрок</div>
         <div style="color:var(--gold); font-size:14px; font-weight:700;" id="pTitle">Титул: Новобранец</div>
-        <div style="color:var(--dim); font-size:14px;">ID: <span id="pId">0</span></div>
         <div style="color:var(--dim); font-size:14px;">Побед: <span id="pWins">0</span></div>
       </div>
     </div>
@@ -359,6 +358,7 @@
         <input type="file" id="profileAvatarInput" accept="image/*" onchange="readImage(this, 'profile')">
       </div>
     </div>
+    <div style="color:var(--dim); font-size:14px; text-align:center; margin-top:10px;">Ваш ID: <span id="pId" style="font-weight:900; color:#fff;"></span></div>
     <button class="btn primary" onclick="closeModal('profileModal')" style="width:100%; margin-top:10px;">Закрыть</button>
   </div>
 </div>
@@ -372,7 +372,6 @@
       <div>
         <div style="font-size:20px; font-weight:900;" id="vpName">Игрок</div>
         <div style="color:var(--gold); font-size:14px; font-weight:700;" id="vpTitle">Титул: Новобранец</div>
-        <div style="color:var(--dim); font-size:14px;">ID: <span id="vpId">0</span></div>
         <div style="color:var(--dim); font-size:14px;">Побед: <span id="vpWins">0</span></div>
       </div>
     </div>
@@ -384,6 +383,7 @@
       </div>
     </div>
 
+    <div style="color:var(--dim); font-size:14px; text-align:center; margin-top:10px;">ID: <span id="vpId" style="font-weight:900; color:#fff;"></span></div>
     <button class="btn primary" onclick="closeModal('viewProfileModal')" style="width:100%; margin-top:10px;">Закрыть</button>
   </div>
 </div>
@@ -611,6 +611,7 @@ function $(id) { return document.getElementById(id); }
 function saveDB() { if (isFirebaseReady) firebaseDB.set(db).catch(e => console.error("Save Error:", e)); }
 function loadDB() {}
 
+// Хелпер для имени (ТОЛЬКО НИК И ТЕГ, БЕЗ ID)
 function getDisplayName(login) {
     if (!db.users[login]) return login;
     const u = db.users[login];
@@ -618,7 +619,7 @@ function getDisplayName(login) {
     if (u.clanId && db.clans[u.clanId]) {
         clanTag = db.clans[u.clanId].tag ? `[${db.clans[u.clanId].tag}] ` : '[CLAN] ';
     }
-    return `${clanTag}${u.name} (#${u.id})`;
+    return `${clanTag}${u.name}`;
 }
 
 function getAvatarHtml(login, size = '40px', fontSize = '24px') {
@@ -645,6 +646,22 @@ firebaseDB.on('value', (snapshot) => {
   const data = snapshot.val();
   db = data || { users: {}, clans: {}, messages: {}, lobbies: {} };
   if (!db.users) db.users = {}; if (!db.clans) db.clans = {}; if (!db.messages) db.messages = {}; if (!db.lobbies) db.lobbies = {};
+
+  // Миграция старых аккаунтов (выдаем ID, если его нет)
+  let dbChanged = false;
+  Object.values(db.users).forEach(u => {
+      if (!u.id) {
+          let newId;
+          let isUnique = false;
+          while (!isUnique) {
+              newId = Math.floor(10000000 + Math.random() * 90000000).toString();
+              isUnique = !Object.values(db.users).some(x => x.id === newId);
+          }
+          u.id = newId;
+          dbChanged = true;
+      }
+  });
+  if (dbChanged) saveDB();
 
   if (currentUser && db.users[currentUser.login] && db.users[currentUser.login].banned) {
       toast('ВЫ ЗАБАНЕНЫ АДМИНИСТРАТОРОМ!', 'error');
@@ -847,11 +864,6 @@ function updateAuthUI() {
   $('avatarField').style.display = authMode === 'register' ? 'block' : 'none';
 }
 
-// Генератор случайного 8-значного ID
-function generateId() {
-    return Math.floor(10000000 + Math.random() * 90000000).toString();
-}
-
 $('authBtn').onclick = () => {
   if (!isFirebaseReady) return toast('Подключение...', 'error');
   const login = $('authLogin').value.trim().toLowerCase(), pass = $('authPass').value;
@@ -866,7 +878,7 @@ $('authBtn').onclick = () => {
     let newId;
     let isUnique = false;
     while (!isUnique) {
-        newId = generateId();
+        newId = Math.floor(10000000 + Math.random() * 90000000).toString();
         isUnique = !Object.values(db.users).some(u => u.id === newId);
     }
 
@@ -907,9 +919,9 @@ function openModal(id) {
   if (id === 'profileModal') { 
     $('pAvatarWrap').outerHTML = getAvatarHtml(currentUser.login, '70px', '36px').replace('class="avatar-wrap', 'id="pAvatarWrap" class="avatar-wrap');
     $('pName').textContent = getDisplayName(currentUser.login); 
-    $('pId').textContent = currentUser.id;
     $('pWins').textContent = currentUser.wins;
     $('pTitle').textContent = `Титул: ${currentUser.title || 'Рядовой'}`;
+    $('pId').textContent = currentUser.id; // Показываем ID в профиле
     renderTitleList();
     renderFrameList();
   }
@@ -933,9 +945,9 @@ function viewProfile(login) {
     // Отрисовка аватарки
     $('vpAvatarWrap').innerHTML = getAvatarHtml(login, '70px', '36px');
     $('vpName').textContent = getDisplayName(login);
-    $('vpId').textContent = u.id;
     $('vpTitle').textContent = `Титул: ${u.title || 'Рядовой'}`;
     $('vpWins').textContent = u.wins || 0;
+    $('vpId').textContent = u.id; // Показываем ID в профиле друга
     
     // История боев
     const history = u.history || [];
