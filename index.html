@@ -692,6 +692,19 @@ firebaseDB.on('value', (snapshot) => {
         saveDB();
     }
 
+    // ВАЖНО: Очищаем старые лобби, если мы в них, но игры нет
+    if (currentUser.lobby && !game) {
+        if (db.lobbies[currentUser.lobby]) {
+            const lobby = db.lobbies[currentUser.lobby];
+            if (lobby.status === 'playing' && lobby.players.length === 2) {
+                startGame(currentUser.lobby);
+            }
+        } else {
+            currentUser.lobby = null;
+            if (!game) showMainMenu();
+        }
+    }
+
     checkNotifications();
     updateNotificationDot();
     if (!$('mainMenu').classList.contains('hidden')) showMainMenu();
@@ -702,15 +715,6 @@ firebaseDB.on('value', (snapshot) => {
     if (!$('adminModal').classList.contains('hidden')) renderAdminPanel();
     if (!$('historyModal').classList.contains('hidden')) renderHistory();
     if (!$('viewProfileModal').classList.contains('hidden')) renderViewProfile(activeViewProfile);
-    
-    if (currentUser.lobby && db.lobbies[currentUser.lobby] && !game) {
-      const lobby = db.lobbies[currentUser.lobby];
-      if (lobby.status === 'playing' && lobby.players.length === 2) startGame(currentUser.lobby);
-    }
-    if (currentUser.lobby && !db.lobbies[currentUser.lobby]) {
-      currentUser.lobby = null;
-      if (!game) showMainMenu();
-    }
 
     if (game && currentUser.lobby && db.lobbies[currentUser.lobby] && db.lobbies[currentUser.lobby].gameState) {
         const remoteGame = db.lobbies[currentUser.lobby].gameState;
@@ -908,7 +912,15 @@ $('authBtn').onclick = () => {
 };
 
 function loginUser(login) { currentUser = db.users[login]; localStorage.setItem('tw_user', login); $('authLogin').value = ''; $('authPass').value = ''; showMainMenu(); toast('Успешно!', 'success'); }
-function logout() { localStorage.removeItem('tw_user'); currentUser = null; $('authScreen').classList.remove('hidden'); $('mainMenu').classList.add('hidden'); $('gameScreen').style.display = 'none'; stopPumpkinRain(); updateAuthUI(); }
+function logout() { 
+    syncUser();
+    if (currentUser && currentUser.lobby && db.lobbies[currentUser.lobby]) {
+        delete db.lobbies[currentUser.lobby];
+        currentUser.lobby = null;
+        saveDB();
+    }
+    localStorage.removeItem('tw_user'); currentUser = null; $('authScreen').classList.remove('hidden'); $('mainMenu').classList.add('hidden'); $('gameScreen').style.display = 'none'; stopPumpkinRain(); updateAuthUI(); 
+}
 
 function showMainMenu() {
   if (!currentUser) return logout();
