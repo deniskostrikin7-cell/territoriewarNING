@@ -470,8 +470,8 @@
     <div style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
       <div class="news-item">
         <div class="news-date">Сегодня</div>
-        <div class="news-title">Обновление 2.5</div>
-        <div class="news-text">Полностью починен ID и профиль. Теперь ники отображаются чисто, а ID всегда виден в профиле.</div>
+        <div class="news-title">Обновление 2.6</div>
+        <div class="news-text">Починены лобби. Теперь они не будут "залипать". Исправлена система прочтения сообщений (уведомления больше не висят после прочтения).</div>
       </div>
     </div>
     <button class="btn primary" onclick="closeModal('newsModal')" style="width:100%; margin-top:20px;">Закрыть</button>
@@ -731,6 +731,7 @@ function checkNotifications() {
         currentUser.friends.forEach(f => {
             const key = [currentUser.login, f].sort().join(':');
             const msgs = db.messages[key] || [];
+            // Проверяем, есть ли непрочитанные (начиная с индекса, который сохранен в readChats)
             let startIndex = readChats[f] || 0;
             for (let i = startIndex; i < msgs.length; i++) {
                 if (msgs[i].from !== currentUser.login) unreadChatCount++;
@@ -1243,7 +1244,7 @@ function openChatWith(login) {
     activeChatWith = login; 
     const key = [currentUser.login, login].sort().join(':');
     const msgs = db.messages[key] || [];
-    readChats[login] = msgs.length;
+    readChats[login] = msgs.length; // Отмечаем все сообщения прочитанными
     checkNotifications();
 
     $('chatEmptyArea').style.display = 'none'; $('chatMainArea').style.display = 'flex'; $('chatActiveName').textContent = getDisplayName(login); renderChatFriendsList(); renderChatMessages(); 
@@ -1260,7 +1261,7 @@ function sendChatMsg() {
     db.messages[k].push({ from: currentUser.login, text: t }); 
     $('chatInputField').value = ''; saveDB(); renderChatMessages(); 
     
-    readChats[activeChatWith] = db.messages[k].length;
+    readChats[activeChatWith] = db.messages[k].length; // Отмечаем как прочитанное
 }
 
 /* === КЛАНЫ === */
