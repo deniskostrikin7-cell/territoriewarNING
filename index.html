@@ -601,7 +601,7 @@ const FRAMES_DB = [
     { val: 'frame-gold', name: 'Золото', desc: 'Получено в Battle Pass (Уровень 6).', class: 'frame-gold', reqLvl: 6 },
     { val: 'frame-fire', name: 'Огонь', desc: 'Получено в Battle Pass (Уровень 7).', class: 'frame-fire', reqLvl: 7 },
     { val: 'frame-blood', name: 'helloween26', desc: 'Можно было получить во время события: helloween 2026 year', class: 'frame-blood' },
-    { val: 'frame-dev', name: 'Разработчик', desc: 'Выдается только создателю игры.', class: 'frame-dev', adminOnly: true }
+    { val: 'frame-dev', name: 'Разработчик, Бета тестер, Креатор', desc: 'Выдается только создателю игры.', class: 'frame-dev', adminOnly: true }
 ];
 
 let isBgAnimationEnabled = localStorage.getItem('bgAnim') !== 'false';
@@ -1101,8 +1101,8 @@ function adminWipeAllFriends() {
 function renderTitleList() {
   const list = $('titleList'); let titles = ['Рядовой'];
   
-  if (currentUser.login === ADMIN_USERNAME && !titles.includes('Разработчик')) {
-      titles.push('Разработчик');
+  if (currentUser.login === ADMIN_USERNAME && !titles.includes('Разработчик, Бета тестер, Креатор')) {
+      titles.push('Разработчик, Бета тестер, Креатор');
   }
 
   if (currentUser.unlocked) currentUser.unlocked.forEach(lvl => { const r = BP_REWARDS.find(x => x.level === lvl); if (r && r.type === 'title') titles.push(r.val); });
