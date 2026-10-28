@@ -48,6 +48,7 @@
   .menu-right { position: absolute; right: 40px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 15px; align-items: flex-end; }
   .menu-bottom-left { position: absolute; left: 40px; bottom: 40px; }
   .menu-bottom-center { position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%); }
+  .menu-bottom-right { position: absolute; right: 40px; bottom: 40px; }
   .menu-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 15px; }
 
   .profile-btn { display: flex; align-items: center; gap: 12px; padding: 10px 20px; border-radius: 16px; cursor: pointer; position: relative; transition: 0.2s; }
@@ -225,20 +226,12 @@
   .file-upload-btn { width: 100%; padding: 12px; background: rgba(74,140,255,0.1); border: 1px dashed var(--accent); border-radius: 12px; color: var(--accent); font-weight: 800; text-align: center; transition: 0.2s; }
   .file-upload-wrapper:hover .file-upload-btn { background: rgba(74,140,255,0.2); }
 
-  /* КРОППЕР АВАТАРКИ */
-  #cropModal { z-index: 2000; }
-  .crop-container { width: 250px; height: 250px; margin: 0 auto 20px auto; position: relative; overflow: hidden; border-radius: 50%; border: 4px solid var(--accent); background: #000; cursor: move; box-sizing: border-box; }
-  #cropImage { position: absolute; transform-origin: center center; pointer-events: none; max-width: none; user-select: none; }
-  .crop-controls { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
-  .crop-controls input[type=range] { flex: 1; }
-
   /* ВЫБОР РАМОК */
   .frame-selector { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; }
   .frame-option { min-width: 80px; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 12px; text-align: center; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative; }
   .frame-option:hover { border-color: var(--accent); }
   .frame-option.active { border-color: var(--accent); background: rgba(74,140,255,0.1); }
   
-  /* Замок на заблокированных рамках */
   .frame-lock { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; text-shadow: 0 2px 5px #000; z-index: 5; }
   .frame-option.locked { opacity: 0.6; }
   .frame-option.locked .frame-preview { filter: grayscale(0.5) brightness(0.5); }
@@ -264,30 +257,10 @@
       <label>Аватарка (по желанию)</label>
       <div class="file-upload-wrapper">
         <div class="file-upload-btn" id="authAvatarBtnText">📸 Выбрать фото</div>
-        <input type="file" id="authAvatar" accept="image/*" onchange="startCrop(this, 'auth')">
+        <input type="file" id="authAvatar" accept="image/*" onchange="readImage(this, 'auth')">
       </div>
     </div>
     <button class="btn primary" id="authBtn" style="width:100%; margin-top:10px;">Войти</button>
-  </div>
-</div>
-
-<!-- МОДАЛКА ОБРЕЗКИ АВАТАРКИ -->
-<div class="overlay-modal hidden" id="cropModal">
-  <div class="modal glass" style="text-align: center;">
-    <h2 style="margin-bottom: 15px;">Обрезка фото</h2>
-    <p style="font-size:12px; color:var(--dim); margin-bottom: 15px;">Двигай фото и меняй масштаб</p>
-    <div class="crop-container" id="cropContainer">
-      <img id="cropImage" src="">
-    </div>
-    <div class="crop-controls">
-      <span>➖</span>
-      <input type="range" id="cropZoom" min="0.5" max="3" step="0.01" value="1">
-      <span>➕</span>
-    </div>
-    <div style="display:flex; gap:10px;">
-      <button class="btn danger" onclick="cancelCrop()" style="flex:1;">Отмена</button>
-      <button class="btn success" onclick="applyCrop()" style="flex:1;">Сохранить</button>
-    </div>
   </div>
 </div>
 
@@ -305,7 +278,6 @@
   
   <div class="menu-right">
     <div class="side-btn glass" id="btnAdminPanel" style="display:none; background:rgba(245,184,61,0.2); border-color:var(--gold); color:var(--gold);" onclick="openModal('adminModal')">👑 Админ-панель</div>
-    <div class="side-btn glass" onclick="openModal('historyModal')">📜 История боев</div>
     <div class="side-btn glass" onclick="openModal('chatModal')">💬 Чат <div class="notif-dot" id="notifChatDot">0</div></div>
     <div class="side-btn glass" onclick="openModal('newsModal')">📰 Новости</div>
     <div class="side-btn glass" onclick="openModal('friendsModal')">👥 Друзья <div class="notif-dot" id="notifDotBtn">0</div></div>
@@ -319,6 +291,7 @@
   
   <div class="menu-bottom-left"><button class="btn gold" onclick="openModal('battlePassModal')" style="padding: 20px; font-size: 18px; border-radius: 20px;">🏆 Battle Pass</button></div>
   <div class="menu-bottom-center"><button class="btn glass" onclick="logout()">🚪 Выйти</button></div>
+  <div class="menu-bottom-right"><button class="btn glass" onclick="openModal('historyModal')" style="padding: 14px 24px; font-weight: 800;">📜 История боев</button></div>
 </div>
 
 <!-- КАСТОМНЫЙ CONFIRM -->
@@ -380,7 +353,7 @@
       <label>Обновить аватарку</label>
       <div class="file-upload-wrapper">
         <div class="file-upload-btn" id="profileAvatarBtnText">📸 Загрузить новое фото</div>
-        <input type="file" id="profileAvatarInput" accept="image/*" onchange="startCrop(this, 'profile')">
+        <input type="file" id="profileAvatarInput" accept="image/*" onchange="readImage(this, 'profile')">
       </div>
     </div>
     <button class="btn primary" onclick="closeModal('profileModal')" style="width:100%; margin-top:10px;">Закрыть</button>
@@ -574,7 +547,6 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const firebaseDB = firebase.database().ref('game_data');
 
-// ТВОЙ НИК ДЛЯ АДМИНКИ И ТИТУЛА
 const ADMIN_USERNAME = 't3s1q'; 
 
 let db = { users: {}, clans: {}, messages: {}, lobbies: {} };
@@ -605,15 +577,6 @@ const FRAMES_DB = [
 
 let isBgAnimationEnabled = localStorage.getItem('bgAnim') !== 'false';
 let pumpkinInterval = null;
-
-// Переменные для кроппера
-let cropTarget = null; 
-let cropImg = null;
-let cropScale = 1;
-let cropPosX = 0;
-let cropPosY = 0;
-let isDragging = false;
-let startX, startY;
 
 function $(id) { return document.getElementById(id); }
 function saveDB() { if (isFirebaseReady) firebaseDB.set(db).catch(e => console.error("Save Error:", e)); }
@@ -744,123 +707,45 @@ function checkNotifications() {
 
 function toast(m, type = '') { const el = $('toast'); el.textContent = m; el.className = 'toast show ' + type; clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 2000); }
 
-/* === КРОППЕР АВАТАРКИ (ИСПРАВЛЕННЫЙ) === */
-function startCrop(input, target) {
-    if (input.files && input.files[0]) {
+/* === ПРОСТАЯ ЗАГРУЗКА И ОБРЕЗКА АВАТАРКИ === */
+function readImage(input, target) { 
+    if (input.files && input.files[0]) { 
         const file = input.files[0];
         if (!file.type.startsWith('image/')) return toast('Выберите картинку!', 'error');
         
-        cropTarget = target;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            cropImg = new Image();
-            cropImg.onload = function() {
-                $('cropImage').src = cropImg.src;
-                $('cropModal').classList.remove('hidden');
+        const reader = new FileReader(); 
+        reader.onload = function(e) { 
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                const size = 150; 
+                canvas.width = size; canvas.height = size;
+                const ctx = canvas.getContext('2d');
                 
-                // Сброс параметров
-                cropScale = 1;
-                cropPosX = 0;
-                cropPosY = 0;
-                $('cropZoom').value = 1;
+                // Центрируем и обрезаем квадрат
+                const minDim = Math.min(img.width, img.height);
+                const sx = (img.width - minDim) / 2;
+                const sy = (img.height - minDim) / 2;
                 
-                // Ждем отрисовки, чтобы отцентрировать
-                setTimeout(() => {
-                    centerImage();
-                }, 50);
+                ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size);
+                const base64 = canvas.toDataURL('image/jpeg', 0.8); 
+                
+                if (target === 'auth') {
+                    window.tempAuthAvatar = base64;
+                    $('authAvatarBtnText').textContent = '✅ Фото выбрано';
+                } else if (target === 'profile') {
+                    currentUser.avatar = base64;
+                    saveDB();
+                    showMainMenu();
+                    openModal('profileModal');
+                    toast('Аватарка обновлена!', 'success');
+                }
             };
-            cropImg.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-        input.value = ''; // Сброс
-    }
-}
-
-function centerImage() {
-    const imgEl = $('cropImage');
-    // Центрируем картинку внутри контейнера (250x250)
-    const containerW = 250;
-    const containerH = 250;
-    
-    // Изначально ставим по центру
-    cropPosX = (containerW - imgEl.clientWidth) / 2;
-    cropPosY = (containerH - imgEl.clientHeight) / 2;
-    
-    updateCropImage();
-}
-
-function updateCropImage() {
-    const imgEl = $('cropImage');
-    imgEl.style.transform = `translate(${cropPosX}px, ${cropPosY}px) scale(${cropScale})`;
-}
-
-$('cropZoom').oninput = function() {
-    cropScale = parseFloat(this.value);
-    updateCropImage();
-};
-
-const cropContainer = $('cropContainer');
-cropContainer.onmousedown = (e) => { isDragging = true; startX = e.clientX - cropPosX; startY = e.clientY - cropPosY; };
-window.onmouseup = () => { isDragging = false; };
-window.onmousemove = (e) => {
-    if (!isDragging) return;
-    cropPosX = e.clientX - startX;
-    cropPosY = e.clientY - startY;
-    updateCropImage();
-};
-// Для тач-экранов
-cropContainer.ontouchstart = (e) => { isDragging = true; startX = e.touches[0].clientX - cropPosX; startY = e.touches[0].clientY - cropPosY; };
-window.ontouchend = () => { isDragging = false; };
-window.ontouchmove = (e) => {
-    if (!isDragging) return;
-    cropPosX = e.touches[0].clientX - startX;
-    cropPosY = e.touches[0].clientY - startY;
-    updateCropImage();
-};
-
-function cancelCrop() {
-    $('cropModal').classList.add('hidden');
-    cropImg = null;
-}
-
-function applyCrop() {
-    if (!cropImg) return;
-    
-    const canvas = document.createElement('canvas');
-    const size = 150;
-    canvas.width = size; canvas.height = size;
-    const ctx = canvas.getContext('2d');
-    
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, size, size);
-    
-    const scaleFactor = size / 250; // Контейнер 250x250
-    
-    // Переносим начало координат в центр
-    ctx.translate(size/2, size/2);
-    ctx.scale(cropScale, cropScale);
-    
-    // Координаты смещения (учитывая, что мы хотим обрезать центр)
-    // Так как картинка имеет свои размеры, а мы её двигаем, нужно вычесть её половину
-    const dx = (cropPosX * scaleFactor) - (size/2) / cropScale + (cropImg.width/2);
-    const dy = (cropPosY * scaleFactor) - (size/2) / cropScale + (cropImg.height/2);
-    
-    ctx.drawImage(cropImg, -cropImg.width/2 + (cropPosX * scaleFactor) / cropScale, -cropImg.height/2 + (cropPosY * scaleFactor) / cropScale);
-    
-    const base64 = canvas.toDataURL('image/jpeg', 0.8);
-    
-    if (cropTarget === 'auth') {
-        window.tempAuthAvatar = base64;
-        $('authAvatarBtnText').textContent = '✅ Фото выбрано';
-    } else if (cropTarget === 'profile') {
-        currentUser.avatar = base64;
-        saveDB();
-        showMainMenu();
-        openModal('profileModal');
-        toast('Аватарка обновлена!', 'success');
-    }
-    
-    cancelCrop();
+            img.src = e.target.result; 
+        }; 
+        reader.readAsDataURL(file); 
+        input.value = ''; // Сброс, чтобы можно было выбрать тот же файл
+    } 
 }
 /* ======================= */
 
