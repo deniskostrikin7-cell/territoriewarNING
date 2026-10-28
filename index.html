@@ -320,9 +320,11 @@
     <div class="tabs">
       <div class="tab active" id="adminTabUsers" onclick="switchAdminTab('users')">Игроки</div>
       <div class="tab" id="adminTabClans" onclick="switchAdminTab('clans')">Кланы</div>
+      <div class="tab" id="adminTabLobbies" onclick="switchAdminTab('lobbies')">Лобби</div>
     </div>
     <div id="adminUsersView" style="max-height: 250px; overflow-y: auto;"><div id="adminUsersList"></div></div>
     <div id="adminClansView" style="display:none; max-height: 250px; overflow-y: auto;"><div id="adminClansList"></div></div>
+    <div id="adminLobbiesView" style="display:none; max-height: 250px; overflow-y: auto;"><div id="adminLobbiesList"></div></div>
     <button class="btn primary" onclick="closeModal('adminModal')" style="width:100%; margin-top:20px;">Закрыть</button>
   </div>
 </div>
@@ -1039,11 +1041,14 @@ function saveMatchResult(enemyName, isWin) {
 /* === АДМИНКА === */
 function switchAdminTab(tab) {
     if (tab === 'users') {
-        $('adminTabUsers').classList.add('active'); $('adminTabClans').classList.remove('active');
-        $('adminUsersView').style.display = 'block'; $('adminClansView').style.display = 'none';
-    } else {
-        $('adminTabUsers').classList.remove('active'); $('adminTabClans').classList.add('active');
-        $('adminUsersView').style.display = 'none'; $('adminClansView').style.display = 'block';
+        $('adminTabUsers').classList.add('active'); $('adminTabClans').classList.remove('active'); $('adminTabLobbies').classList.remove('active');
+        $('adminUsersView').style.display = 'block'; $('adminClansView').style.display = 'none'; $('adminLobbiesView').style.display = 'none';
+    } else if (tab === 'clans') {
+        $('adminTabUsers').classList.remove('active'); $('adminTabClans').classList.add('active'); $('adminTabLobbies').classList.remove('active');
+        $('adminUsersView').style.display = 'none'; $('adminClansView').style.display = 'block'; $('adminLobbiesView').style.display = 'none';
+    } else if (tab === 'lobbies') {
+        $('adminTabUsers').classList.remove('active'); $('adminTabClans').classList.remove('active'); $('adminTabLobbies').classList.add('active');
+        $('adminUsersView').style.display = 'none'; $('adminClansView').style.display = 'none'; $('adminLobbiesView').style.display = 'block';
     }
 }
 
@@ -1066,21 +1071,27 @@ function renderAdminPanel() {
             <button class="btn danger" onclick="adminDeleteClan('${c.id}')" style="padding:8px 12px; font-size:12px;">Удалить</button>
         </div>
     `).join('');
+
+    // Новая вкладка лобби
+    $('adminLobbiesList').innerHTML = Object.values(db.lobbies).map(l => `
+        <div class="card" style="margin-bottom:8px;">
+            <div class="avatar-box" style="font-size:20px;">🎮</div>
+            <div class="card-info"><div class="n">Код: ${l.code}</div><div class="s">Хост: ${l.host} | Игроков: ${l.players.length} | Статус: ${l.status}</div></div>
+            <button class="btn danger" onclick="adminDeleteLobby('${l.code}')" style="padding:8px 12px; font-size:12px;">Удалить</button>
+        </div>
+    `).join('');
 }
 
-// Вызов окна бана
 function promptBan(login) {
     if (login === ADMIN_USERNAME) return toast('Нельзя забанить себя!', 'error');
     const user = db.users[login]; if (!user) return;
     
     if (user.banned) {
-        // Разбан
         user.banned = false; user.banReason = '';
         saveDB(); toast('Игрок разбанен', 'success'); renderAdminPanel();
     } else {
-        // Бан
         const reason = prompt("Введите причину бана для " + login + ":", "Нарушение правил");
-        if (reason === null) return; // отмена
+        if (reason === null) return; 
         user.banned = true; 
         user.banReason = reason || "Без указания причины";
         saveDB(); toast('Игрок забанен', 'error'); renderAdminPanel();
@@ -1116,6 +1127,22 @@ function adminWipeAllFriends() {
     showConfirm('Вы уверены, что хотите УДАЛИТЬ ВСЕХ ДРУЗЕЙ У ВСЕХ ИГРОКОВ? Это действие необратимо.', () => {
         Object.values(db.users).forEach(u => { u.friends = []; u.requests = []; u.sentRequests = []; });
         saveDB(); toast('Все друзья удалены!', 'success'); renderAdminPanel();
+    });
+}
+
+function adminDeleteLobby(code) {
+    showConfirm(`Удалить лобби ${code}?`, () => {
+        if (db.lobbies[code]) {
+            // Если хост был в лобби, сбрасываем его текущий лобби
+            const host = db.lobbies[code].host;
+            if (db.users[host] && db.users[host].lobby === code) {
+                db.users[host].lobby = null;
+            }
+            delete db.lobbies[code];
+            saveDB();
+            toast('Лобби удалено', 'success');
+            renderAdminPanel();
+        }
     });
 }
 /* =============== */
