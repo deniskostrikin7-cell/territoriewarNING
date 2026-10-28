@@ -1106,7 +1106,7 @@ function renderTitleList() {
   const list = $('titleList'); let titles = ['Рядовой'];
   
   if (currentUser.login === ADMIN_USERNAME) {
-      titles.push('Разработчик' 'Бета тестер' 'Креатор');
+      titles.push('Разработчик', 'Бета тестер', 'Креатор');
   }
 
   if (currentUser.unlocked) currentUser.unlocked.forEach(lvl => { const r = BP_REWARDS.find(x => x.level === lvl); if (r && r.type === 'title') titles.push(r.val); });
