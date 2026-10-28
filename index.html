@@ -58,7 +58,7 @@
   .avatar-wrap.frame-gold { background: linear-gradient(45deg, #FFD700, #FFA500, #FFD700); box-shadow: 0 0 10px rgba(255,215,0,0.5); }
   .avatar-wrap.frame-fire { background: linear-gradient(45deg, #ff0000, #ff8c00, #ff0000); box-shadow: 0 0 15px rgba(255,0,0,0.6); animation: pulse 2s infinite; }
   .avatar-wrap.frame-blood { background: linear-gradient(135deg, #8a0303, #ff0000, #8a0303); box-shadow: 0 0 20px rgba(255,0,0,0.8); }
-  /* Капли крови на рамке (через псевдоэлементы) */
+  
   .avatar-wrap.frame-blood::before, .avatar-wrap.frame-blood::after { content: ''; position: absolute; background: #8a0303; border-radius: 50%; }
   .avatar-wrap.frame-blood::before { width: 6px; height: 12px; top: -2px; right: 2px; box-shadow: 0 3px 0 #8a0303; }
   .avatar-wrap.frame-blood::after { width: 4px; height: 8px; bottom: -1px; left: 4px; }
@@ -222,10 +222,16 @@
 
   /* ВЫБОР РАМОК */
   .frame-selector { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; }
-  .frame-option { min-width: 80px; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 12px; text-align: center; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .frame-option { min-width: 80px; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 12px; text-align: center; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative; }
   .frame-option:hover { border-color: var(--accent); }
   .frame-option.active { border-color: var(--accent); background: rgba(74,140,255,0.1); }
-  .frame-preview { width: 40px; height: 40px; border-radius: 50%; background: #0d1117; padding: 3px; }
+  
+  /* Замок на заблокированных рамках */
+  .frame-lock { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; text-shadow: 0 2px 5px #000; z-index: 5; }
+  .frame-option.locked { opacity: 0.6; }
+  .frame-option.locked .frame-preview { filter: grayscale(0.5) brightness(0.5); }
+
+  .frame-preview { width: 40px; height: 40px; border-radius: 50%; background: #0d1117; padding: 3px; display: flex; align-items: center; justify-content: center; }
   .frame-name { font-size: 11px; font-weight: 800; }
 </style>
 </head>
@@ -354,7 +360,7 @@
     <div class="field" style="margin-bottom:20px;">
       <label>Выбор рамки</label>
       <div class="frame-selector" id="frameSelector"></div>
-      <div id="frameDescription" style="font-size:12px; color:var(--dim); margin-top:8px; font-style:italic;"></div>
+      <div id="frameDescription" style="font-size:12px; color:var(--dim); margin-top:8px; font-style:italic; min-height: 30px;"></div>
     </div>
 
     <div class="field">
@@ -440,14 +446,7 @@
       <div class="news-item">
         <div class="news-date">Сегодня</div>
         <div class="news-title">Обновление 2.1</div>
-        <div class="news-text">• 🛡️ Кланы: создание клана с названием и тегом (до 4 символов), вступление, выход, список участников (до 50) и общий клановый чат.<br>
-    • 🎮 Лобби: создание лобби с кодом, вход по коду, ожидание второго игрока и PvP-матч с синхронизацией ходов через Firebase.<br>
-    • 👑 Админ-панель (только для админа): бан/разбан игроков, удаление аккаунтов и кланов, массовая очистка друзей у всех.<br>
-    • 😊 Смайлы в бою: панель эмоций (🤣😂😘🎁😫😭🥶) с анимацией и передачей сопернику.<br>
-    • ✂️ Обрезка аватарки: загрузка фото, перетаскивание и зум перед сохранением.<br>
-    • 🖼️ Рамки аватара: Золото, Огонь и кровавая helloween26 — с превью и описанием в профиле.<br>
-    • 🔔 Уведомления: счётчики непрочитанных в чате, клане и заявках в друзья.<br>
-    • ⚙️ Настройки: отключение анимации фона и выбор фона (Стандарт, Хэллоуин, Неон, Пламя).</div>
+        <div class="news-text">Рамки в профиле теперь выглядят как сами рамки, а не аватарки. Рамки "Золото" и "Огонь" заблокированы до получения в Battle Pass. Рамка "helloween26" доступна всем!</div>
       </div>
     </div>
     <button class="btn primary" onclick="closeModal('newsModal')" style="width:100%; margin-top:20px;">Закрыть</button>
@@ -569,6 +568,14 @@ const BP_REWARDS = [
   { level: 5, type: 'title', val: 'Полководец', icon: '👑', name: 'Титул: Полководец' },
   { level: 6, type: 'frame', val: 'frame-gold', icon: '🟡', name: 'Рамка: Золото' },
   { level: 7, type: 'frame', val: 'frame-fire', icon: '🔴', name: 'Рамка: Огонь' }
+];
+
+// Доступные рамки
+const FRAMES_DB = [
+    { val: 'none', name: 'Без рамки', desc: 'Стандартная аватарка без рамки.', class: '' },
+    { val: 'frame-gold', name: 'Золото', desc: 'Получено в Battle Pass (Уровень 6).', class: 'frame-gold', reqLvl: 6 },
+    { val: 'frame-fire', name: 'Огонь', desc: 'Получено в Battle Pass (Уровень 7).', class: 'frame-fire', reqLvl: 7 },
+    { val: 'frame-blood', name: 'helloween26', desc: 'Можно было получить во время события: helloween 2026 year', class: 'frame-blood' }
 ];
 
 let isBgAnimationEnabled = localStorage.getItem('bgAnim') !== 'false';
@@ -1015,21 +1022,23 @@ function renderTitleList() {
 }
 function selectTitle(title) { currentUser.title = title; saveDB(); showMainMenu(); $('pTitle').textContent = `Титул: ${title}`; renderTitleList(); toast('Титул изменен', 'success'); }
 
-// Доступные рамки
-const FRAMES_DB = [
-    { val: 'none', name: 'Без рамки', desc: 'Стандартная аватарка без рамки.', class: '' },
-    { val: 'frame-gold', name: 'Золото', desc: 'Получено в Battle Pass (Уровень 6).', class: 'frame-gold' },
-    { val: 'frame-fire', name: 'Огонь', desc: 'Получено в Battle Pass (Уровень 7).', class: 'frame-fire' },
-    { val: 'frame-blood', name: 'helloween26', desc: 'Можно было получить во время события: helloween 2026 year', class: 'frame-blood' }
-];
-
 function renderFrameList() {
   const list = $('frameSelector'); 
   list.innerHTML = FRAMES_DB.map(f => {
+    // Проверяем, открыта ли рамка
+    let isUnlocked = true;
+    if (f.reqLvl && (!currentUser.unlocked || !currentUser.unlocked.includes(f.reqLvl))) {
+        isUnlocked = false;
+    }
+
     const isActive = currentUser.frame === f.val;
-    return `<div class="frame-option ${isActive ? 'active' : ''}" onclick="selectFrame('${f.val}')">
-        <div class="frame-preview ${f.class}" style="width: 100%; height: 40px; border-radius: 8px; padding: 2px;">
-            <div class="avatar-box" style="width: 100%; height: 100%; border: none;">${currentUser.avatar.startsWith('data:image') ? `<img src="${currentUser.avatar}">` : currentUser.avatar}</div>
+    const lockHtml = isUnlocked ? '' : `<div class="frame-lock">🔒</div>`;
+    
+    // Пустой кружок для превью
+    return `<div class="frame-option ${isActive ? 'active' : ''} ${isUnlocked ? '' : 'locked'}" onclick="selectFrame('${f.val}', ${isUnlocked})">
+        ${lockHtml}
+        <div class="frame-preview ${f.class}">
+            <div style="width:100%; height:100%; border-radius:50%; background:#111;"></div>
         </div>
         <div class="frame-name">${f.name}</div>
     </div>`;
@@ -1039,7 +1048,12 @@ function renderFrameList() {
   const activeFrame = FRAMES_DB.find(f => f.val === currentUser.frame) || FRAMES_DB[0];
   $('frameDescription').textContent = activeFrame.desc;
 }
-function selectFrame(frameVal) { 
+
+function selectFrame(frameVal, isUnlocked) { 
+    if (!isUnlocked) {
+        const frameInfo = FRAMES_DB.find(f => f.val === frameVal);
+        return toast(`Сначала получите эту рамку в Battle Pass!`, 'error');
+    }
     currentUser.frame = frameVal; saveDB(); showMainMenu(); 
     $('pAvatarWrap').outerHTML = getAvatarHtml(currentUser.login, '70px', '36px').replace('class="avatar-wrap', 'id="pAvatarWrap" class="avatar-wrap');
     renderFrameList(); toast('Рамка изменена', 'success'); 
