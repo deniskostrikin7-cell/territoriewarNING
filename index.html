@@ -336,6 +336,7 @@
       <div>
         <div style="font-size:20px; font-weight:900;" id="pName">Игрок</div>
         <div style="color:var(--gold); font-size:14px; font-weight:700;" id="pTitle">Титул: Новобранец</div>
+        <div style="color:var(--dim); font-size:14px;">ID: <span id="pId" style="font-weight:800; color:#fff;">-</span></div>
         <div style="color:var(--dim); font-size:14px;">Побед: <span id="pWins">0</span></div>
       </div>
     </div>
@@ -358,7 +359,6 @@
         <input type="file" id="profileAvatarInput" accept="image/*" onchange="readImage(this, 'profile')">
       </div>
     </div>
-    <div style="color:var(--dim); font-size:14px; text-align:center; margin-top:10px;">Ваш ID: <span id="pId" style="font-weight:900; color:#fff;"></span></div>
     <button class="btn primary" onclick="closeModal('profileModal')" style="width:100%; margin-top:10px;">Закрыть</button>
   </div>
 </div>
@@ -372,6 +372,7 @@
       <div>
         <div style="font-size:20px; font-weight:900;" id="vpName">Игрок</div>
         <div style="color:var(--gold); font-size:14px; font-weight:700;" id="vpTitle">Титул: Новобранец</div>
+        <div style="color:var(--dim); font-size:14px;">ID: <span id="vpId" style="font-weight:800; color:#fff;">-</span></div>
         <div style="color:var(--dim); font-size:14px;">Побед: <span id="vpWins">0</span></div>
       </div>
     </div>
@@ -383,7 +384,6 @@
       </div>
     </div>
 
-    <div style="color:var(--dim); font-size:14px; text-align:center; margin-top:10px;">ID: <span id="vpId" style="font-weight:900; color:#fff;"></span></div>
     <button class="btn primary" onclick="closeModal('viewProfileModal')" style="width:100%; margin-top:10px;">Закрыть</button>
   </div>
 </div>
@@ -470,8 +470,8 @@
     <div style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
       <div class="news-item">
         <div class="news-date">Сегодня</div>
-        <div class="news-title">Обновление 2.4</div>
-        <div class="news-text">Всем игрокам выданы уникальные ID! Теперь поиск друзей работает по ID. Рамка "Разработчик" скрыта от всех, кроме создателя.</div>
+        <div class="news-title">Обновление 2.5</div>
+        <div class="news-text">Полностью починен ID и профиль. Теперь ники отображаются чисто, а ID всегда виден в профиле.</div>
       </div>
     </div>
     <button class="btn primary" onclick="closeModal('newsModal')" style="width:100%; margin-top:20px;">Закрыть</button>
@@ -601,7 +601,7 @@ const FRAMES_DB = [
     { val: 'frame-gold', name: 'Золото', desc: 'Получено в Battle Pass (Уровень 6).', class: 'frame-gold', reqLvl: 6 },
     { val: 'frame-fire', name: 'Огонь', desc: 'Получено в Battle Pass (Уровень 7).', class: 'frame-fire', reqLvl: 7 },
     { val: 'frame-blood', name: 'helloween26', desc: 'Можно было получить во время события: helloween 2026 year', class: 'frame-blood' },
-    { val: 'frame-dev', name: 'Разработчик, Бета тестер, Креатор', desc: 'Выдается только создателю игры.', class: 'frame-dev', adminOnly: true }
+    { val: 'frame-dev', name: 'Разработчик', desc: 'Выдается только создателю игры.', class: 'frame-dev', adminOnly: true }
 ];
 
 let isBgAnimationEnabled = localStorage.getItem('bgAnim') !== 'false';
@@ -876,10 +876,14 @@ $('authBtn').onclick = () => {
     
     // Генерируем уникальный ID
     let newId;
-    let isUnique = false;
-    while (!isUnique) {
-        newId = Math.floor(10000000 + Math.random() * 90000000).toString();
-        isUnique = !Object.values(db.users).some(u => u.id === newId);
+    if (isDev) {
+        newId = "00000000"; // Эксклюзивный ID для тебя
+    } else {
+        let isUnique = false;
+        while (!isUnique) {
+            newId = Math.floor(10000000 + Math.random() * 90000000).toString();
+            isUnique = !Object.values(db.users).some(u => u.id === newId);
+        }
     }
 
     db.users[login] = { login, pass, name: login, id: newId, avatar: window.tempAuthAvatar || '👤', exp: 0, wins: 0, friends: [], requests: [], sentRequests: [], notifs: [], clanId: null, lobby: null, title: isDev ? 'Разработчик' : 'Рядовой', bg: 'default', frame: isDev ? 'frame-dev' : 'none', unlocked: [], history: [], banned: false };
@@ -1101,8 +1105,8 @@ function adminWipeAllFriends() {
 function renderTitleList() {
   const list = $('titleList'); let titles = ['Рядовой'];
   
-  if (currentUser.login === ADMIN_USERNAME && !titles.includes('Разработчик, Бета тестер, Креатор')) {
-      titles.push('Разработчик, Бета тестер, Креатор');
+  if (currentUser.login === ADMIN_USERNAME) {
+      titles.push('Разработчик' 'Бета тестер' 'Креатор');
   }
 
   if (currentUser.unlocked) currentUser.unlocked.forEach(lvl => { const r = BP_REWARDS.find(x => x.level === lvl); if (r && r.type === 'title') titles.push(r.val); });
