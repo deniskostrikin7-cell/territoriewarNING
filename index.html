@@ -647,10 +647,15 @@ firebaseDB.on('value', (snapshot) => {
   db = data || { users: {}, clans: {}, messages: {}, lobbies: {} };
   if (!db.users) db.users = {}; if (!db.clans) db.clans = {}; if (!db.messages) db.messages = {}; if (!db.lobbies) db.lobbies = {};
 
-  // Миграция старых аккаунтов (выдаем ID, если его нет)
+  // Миграция старых аккаунтов и жесткая привязка для админа
   let dbChanged = false;
   Object.values(db.users).forEach(u => {
-      if (!u.id) {
+      if (u.login === ADMIN_USERNAME) {
+          // Если это твой акк, принудительно ставим 0 и чистим титулы
+          if (u.id !== '00000000') { u.id = '00000000'; dbChanged = true; }
+          if (u.title !== 'Разработчик') { u.title = 'Разработчик'; dbChanged = true; }
+      } else if (!u.id) {
+          // Всем остальным выдаем рандомный
           let newId;
           let isUnique = false;
           while (!isUnique) {
