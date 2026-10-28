@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>⚔️ Эпоха Кланов: Хаб</title>
+<title>⚔️ Захват Территорий</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -89,15 +89,13 @@
   .side-btn { padding: 14px 24px; border-radius: 12px; cursor: pointer; font-weight: 800; font-size: 15px; display: flex; align-items: center; gap: 10px; position: relative; transition: 0.2s; background: rgba(255,140,0,0.1); border: 1px solid rgba(255,140,0,0.3); color: #ffb35c; }
   .side-btn:hover { background: rgba(255,140,0,0.2); border-color: #ff8c00; transform: translateX(-5px); color: #fff; box-shadow: 0 0 15px rgba(255,140,0,0.4); }
   
-  .play-btn { background: linear-gradient(135deg, var(--accent), #2c6fd4); border: none; padding: 16px 60px; border-radius: 20px; font-size: 24px; font-weight: 900; color: #fff; cursor: pointer; letter-spacing: 2px; box-shadow: 0 10px 30px rgba(74,140,255,0.4); transition: 0.2s; text-transform: uppercase; }
+  .play-btn { background: linear-gradient(135deg, var(--accent), #2c6fd4); border: none; padding: 16px 60px; border-radius: 20px; font-size: 26px; font-weight: 900; color: #fff; cursor: pointer; letter-spacing: 2px; box-shadow: 0 10px 30px rgba(74,140,255,0.4); transition: 0.2s; text-transform: uppercase; }
   .play-btn:hover { transform: scale(1.05); box-shadow: 0 15px 40px rgba(74,140,255,0.6); }
   .play-btn.theme-halloween { background: linear-gradient(135deg, #ff8c00, #e65c00); box-shadow: 0 10px 30px rgba(255,140,0,0.4); }
   .play-btn.theme-halloween:hover { box-shadow: 0 15px 40px rgba(255,140,0,0.6); }
 
-  .lobby-btn { padding: 15px 50px; font-size: 16px; border-radius: 16px; width: 100%; max-width: 320px; font-weight: 800; }
-  .survival-btn { background: linear-gradient(135deg, #2a3a20, #1a4a2a); border: 1px solid #4ade80; padding: 15px 50px; font-size: 16px; border-radius: 16px; width: 100%; max-width: 320px; font-weight: 800; color: #a7f3d0; box-shadow: 0 4px 15px rgba(74,222,128,0.2); }
-  .survival-btn:hover { background: #2a4a30; box-shadow: 0 6px 20px rgba(74,222,128,0.4); transform: translateY(-2px); }
-
+  .lobby-btn { padding: 15px 50px; font-size: 18px; border-radius: 16px; width: 100%; max-width: 320px; font-weight: 800; }
+  
   /* МОДАЛКИ */
   .overlay-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 200; backdrop-filter: blur(5px); }
   .overlay-modal.hidden { display: none; }
@@ -140,7 +138,7 @@
   .clan-chat-input input { flex: 1; padding: 10px; background: #0d1117; border: 1px solid var(--border); border-radius: 8px; color: #fff; outline: none; }
   .clan-footer { display: flex; gap: 10px; }
 
-  /* ИГРА ЗАХВАТ */
+  /* ИГРА */
   #gameScreen { position: fixed; inset: 0; background: #05070a; z-index: 300; display: none; flex-direction: column; }
   .game-topbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(19,23,34,0.9); border-bottom: 1px solid var(--border); font-weight: 800; }
   .game-area { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; }
@@ -242,32 +240,11 @@
 
   .frame-preview { width: 40px; height: 40px; border-radius: 50%; background: #0d1117; padding: 3px; display: flex; align-items: center; justify-content: center; }
   .frame-name { font-size: 11px; font-weight: 800; }
-
-  /* ОБЕРТКА ДЛЯ 3D ИГРЫ */
-  #survivalWrapper {
-    position: fixed; inset: 0; z-index: 9999; display: none; background: #000;
-  }
-  #survivalFrame {
-    width: 100%; height: 100%; border: none;
-  }
-  #closeSurvivalBtn {
-    position: absolute; top: 20px; right: 20px; z-index: 10000;
-    background: rgba(255,92,92,0.2); border: 2px solid #ff5c5c; color: #fff;
-    padding: 10px 20px; border-radius: 12px; font-weight: 800; cursor: pointer;
-    backdrop-filter: blur(5px); transition: 0.2s;
-  }
-  #closeSurvivalBtn:hover { background: rgba(255,92,92,0.4); transform: scale(1.05); }
 </style>
 </head>
 <body>
 
 <div id="pumpkin-container"></div>
-
-<!-- ОБЕРТКА ДЛЯ ВЫЖИВАНИЯ -->
-<div id="survivalWrapper">
-  <button id="closeSurvivalBtn" onclick="closeSurvival()">❌ Вернуться в меню</button>
-  <iframe id="survivalFrame"></iframe>
-</div>
 
 <div class="screen" id="authScreen">
   <div class="modal glass">
@@ -310,9 +287,8 @@
   </div>
   
   <div class="menu-center">
-    <button class="play-btn" id="playBtn" onclick="startGame()">Играть (Захват)</button>
-    <button class="btn glass lobby-btn" onclick="openModal('lobbiesModal')">🎮 Лобби (Захват)</button>
-    <button class="survival-btn" onclick="openSurvival()">🧊 CryoSlice 5 (Выживание)</button>
+    <button class="play-btn" id="playBtn" onclick="startGame()">Играть (ИИ)</button>
+    <button class="btn glass lobby-btn" onclick="openModal('lobbiesModal')">🎮 Лобби</button>
   </div>
   
   <div class="menu-bottom-left"><button class="btn gold" onclick="openModal('battlePassModal')" style="padding: 20px; font-size: 18px; border-radius: 20px;">🏆 Battle Pass</button></div>
@@ -496,8 +472,8 @@
     <div style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
       <div class="news-item">
         <div class="news-date">Сегодня</div>
-        <div class="news-title">Глобальное обновление 3.0!</div>
-        <div class="news-text">Мы добавили абсолютно новую игру — <b>CryoSlice 5 (3D Выживание)</b>! Заходите и тестируйте 3D-мир.</div>
+        <div class="news-title">Обновление 2.6</div>
+        <div class="news-text">Починены лобби. Теперь они не будут "залипать". Исправлена система прочтения сообщений (уведомления больше не висят после прочтения).</div>
       </div>
     </div>
     <button class="btn primary" onclick="closeModal('newsModal')" style="width:100%; margin-top:20px;">Закрыть</button>
@@ -531,7 +507,7 @@
 
 <div class="overlay-modal hidden" id="lobbiesModal">
   <div class="modal glass">
-    <h2 style="text-align:center; margin-bottom:20px;">Лобби (Захват)</h2>
+    <h2 style="text-align:center; margin-bottom:20px;">Лобби</h2>
     <div style="display:flex; gap:8px; margin-bottom:20px;"><input type="text" id="joinLobbyCode" placeholder="Код лобби..." style="flex:1; padding:12px; border-radius:10px; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:#fff; outline:none;"><button class="btn primary" onclick="joinLobby()">Войти</button></div>
     <button class="btn gold" onclick="createLobby()" style="width:100%; margin-bottom:20px;">+ Создать лобби</button>
     <h3 style="font-size:14px; margin-bottom:10px; color:var(--dim);">Активные:</h3><div id="lobbiesList"></div>
@@ -1310,3 +1286,309 @@ function renderChatFriendsList() {
       let unreadCount = 0;
       let startIndex = readChats[x] || 0;
       for (let i = startIndex; i < msgs.length; i++) {
+          if (msgs[i].from !== currentUser.login) unreadCount++;
+      }
+
+      return `<div class="chat-sidebar-item ${isActive ? 'active' : ''}" onclick="openChatWith('${u.login}')">${getAvatarHtml(u.login, '30px', '16px')}<div style="font-size:13px; font-weight:700;">${u.name}</div>${unreadCount > 0 ? `<div style="margin-left:auto; min-width:18px; height:18px; padding:0 4px; background:var(--danger); border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:10px; color:#fff; font-weight:900;">${unreadCount > 99 ? '99+' : unreadCount}</div>` : ''}</div>`; 
+  }).join('');
+}
+function openChatWith(login) { 
+    activeChatWith = login; 
+    const key = [currentUser.login, login].sort().join(':');
+    const msgs = db.messages[key] || [];
+    readChats[login] = msgs.length; // Отмечаем все сообщения прочитанными
+    checkNotifications();
+
+    $('chatEmptyArea').style.display = 'none'; $('chatMainArea').style.display = 'flex'; $('chatActiveName').textContent = getDisplayName(login); renderChatFriendsList(); renderChatMessages(); 
+}
+function getChatKey(a, b) { return [a, b].sort().join(':'); }
+function renderChatMessages() {
+  if (!activeChatWith) return; const msgs = db.messages[getChatKey(currentUser.login, activeChatWith)] || [];
+  $('chatMessagesArea').innerHTML = msgs.map(m => `<div style="align-self: ${m.from === currentUser.login ? 'flex-end' : 'flex-start'}; background: ${m.from === currentUser.login ? 'var(--accent)' : 'rgba(255,255,255,0.1)'}; padding: 8px 12px; border-radius: 12px; color: #fff; font-size: 13px; margin-bottom: 4px;">${m.text}</div>`).join('');
+  $('chatMessagesArea').scrollTop = $('chatMessagesArea').scrollHeight;
+}
+function sendChatMsg() { 
+    const t = $('chatInputField').value.trim(); if (!t || !activeChatWith) return; 
+    const k = getChatKey(currentUser.login, activeChatWith); if (!db.messages[k]) db.messages[k] = []; 
+    db.messages[k].push({ from: currentUser.login, text: t }); 
+    $('chatInputField').value = ''; saveDB(); renderChatMessages(); 
+    
+    readChats[activeChatWith] = db.messages[k].length; // Отмечаем как прочитанное
+}
+
+/* === КЛАНЫ === */
+function renderClans() {
+  if (!currentUser) return;
+  $('clanSearchView').style.display = 'block'; $('clanChatView').style.display = 'none';
+  let cl = Object.values(db.clans); const q = ($('searchClanInput')?.value || '').toLowerCase(); if (q) cl = cl.filter(x => x.name.toLowerCase().includes(q));
+  if (cl.length === 0) { $('clansList').innerHTML = '<div style="color:var(--dim); text-align:center; padding:20px;">Нет кланов.</div>'; return; }
+  $('clansList').innerHTML = cl.map(x => `<div class="card"><div class="avatar-box">🛡️</div><div class="card-info"><div class="n">[${x.tag || 'CLAN'}] ${x.name}</div><div class="s">Людей: ${x.members.length}</div></div>${x.members.includes(currentUser.login) ? 'вы в клане' : `<button class="btn primary" onclick="joinClan('${x.id}')" style="padding:8px 12px; font-size:12px;">Вступить</button>`}</div>`).join('');
+}
+function renderClanView() {
+  if (!currentUser?.clanId) return;
+  const c = db.clans[currentUser.clanId];
+  if (!c) { currentUser.clanId = null; saveDB(); return renderClans(); }
+  $('clanSearchView').style.display = 'none'; $('clanChatView').style.display = 'flex';
+  $('myClanName').textContent = `[${c.tag || 'CLAN'}] ${c.name}`; 
+  $('clanMembersCount').textContent = `${c.members.length} / 50`;
+  $('clanMembersList').innerHTML = c.members.map(m => { const u = db.users[m]; if(!u) return ''; return `<div class="clan-member" onclick="viewProfile('${u.login}')">${getAvatarHtml(u.login, '36px', '16px')}<div>${u.name}</div></div>`; }).join('');
+  
+  renderClanChat();
+}
+function createClan() { 
+  const n = $('newClanName').value.trim(); 
+  const tag = $('newClanTag').value.trim().substring(0, 4).toUpperCase();
+  if (!n || !tag) return toast('Введите название и тег (до 4 символов)', 'error'); 
+  
+  const id = 'c_' + Date.now(); 
+  db.clans[id] = { id, name: n, tag: tag, members: [currentUser.login], chat: [] }; 
+  currentUser.clanId = id; 
+  saveDB(); 
+  $('newClanName').value = ''; $('newClanTag').value = ''; 
+  renderClanView(); 
+}
+function joinClan(id) { if (!db.clans[id]) return; db.clans[id].members.push(currentUser.login); currentUser.clanId = id; saveDB(); renderClanView(); }
+function leaveClan() { const c = db.clans[currentUser.clanId]; if (c) { c.members = c.members.filter(m => m !== currentUser.login); if (c.members.length === 0) delete db.clans[c.id]; } currentUser.clanId = null; saveDB(); renderClans(); }
+
+function renderClanChat() {
+  if (!currentUser?.clanId || !db.clans[currentUser.clanId]) return; 
+  const c = db.clans[currentUser.clanId];
+  
+  $('clanChatMessages').innerHTML = (c.chat || []).map(m => `
+      <div class="chat-msg">
+          <div class="author">${m.author}</div>
+          <div class="text">${m.text}</div>
+      </div>
+  `).join('');
+  $('clanChatMessages').scrollTop = $('clanChatMessages').scrollHeight;
+  
+  lastClanMsgCount = (c.chat || []).length;
+  checkNotifications();
+}
+
+function sendClanChat() { 
+    const t = $('clanChatInput').value.trim(); if (!t) return; 
+    const c = db.clans[currentUser.clanId]; if (!c.chat) c.chat = []; 
+    c.chat.push({ author: currentUser.name, text: t }); 
+    $('clanChatInput').value = ''; saveDB(); renderClanChat(); 
+}
+
+/* === ЛОББИ === */
+function renderLobbies() {
+  let l = Object.values(db.lobbies).filter(x => x.players.length < 2 && x.status === 'waiting' && !x.players.includes(currentUser.login));
+  if (l.length === 0) { $('lobbiesList').innerHTML = '<div style="color:var(--dim); text-align:center; font-size:13px;">Нет лобби.</div>'; return; }
+  $('lobbiesList').innerHTML = l.map(x => `<div class="card"><div class="avatar-box">🎮</div><div class="card-info"><div class="n">Лобби ${x.code}</div><div class="s">Хост: ${getDisplayName(x.host)}</div></div><button class="btn primary" onclick="joinLobby('${x.code}')" style="padding:8px 12px;">Войти</button></div>`).join('');
+}
+function createLobby() { 
+  if (currentUser.lobby && !db.lobbies[currentUser.lobby]) currentUser.lobby = null;
+  if (currentUser.lobby) return toast('Вы уже в лобби', 'error'); 
+  const c = Math.random().toString(36).substring(2, 6).toUpperCase(); 
+  db.lobbies[c] = { code: c, host: currentUser.login, players: [currentUser.login], status: 'waiting', gameState: null }; 
+  currentUser.lobby = c; saveDB(); closeModal('lobbiesModal'); toast(`Лобби создано: ${c}`, 'success'); showWaitScreen(c); 
+}
+function joinLobby(code) {
+  code = (code || $('joinLobbyCode').value).trim().toUpperCase(); 
+  if (!db.lobbies[code]) return toast('Лобби не найдено', 'error');
+  const l = db.lobbies[code]; 
+  if (l.players.length >= 2) return toast('Лобби заполнено', 'error'); 
+  l.players.push(currentUser.login); l.status = 'playing'; l.gameState = initGameState(l.players); currentUser.lobby = code; saveDB(); closeModal('lobbiesModal'); startGame(code);
+}
+function showWaitScreen(c) { $('mainMenu').classList.add('hidden'); $('gameScreen').style.display = 'flex'; $('gameScreen').innerHTML = `<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh;"><h2>Ожидание...</h2><div style="font-size:48px; color:var(--accent); font-weight:900;">${c}</div><button class="btn danger" onclick="exitGame()" style="margin-top:20px;">Отмена</button></div>`; }
+
+/* === ИГРА === */
+function initGameState(p) { 
+  const s = 10, t = []; 
+  for (let y = 0; y < s; y++) for (let x = 0; x < s; x++) { 
+    let ty = 'plain'; if (Math.random() < 0.1) ty = 'gold'; else if (Math.random() < 0.05) ty = 'forest'; 
+    t.push({ x, y, type: ty, owner: -1, def: 0 }); 
+  } 
+  t[11].owner = 0; t[11].def = 1; t[88].owner = 1; t[88].def = 1; 
+  return { size: s, tiles: t, p1: p[0], p2: p[1], turn: 0, gold: [15, 15], winner: undefined }; 
+}
+
+function startGame(lobbyCode = null) {
+  $('mainMenu').classList.add('hidden'); $('gameScreen').style.display = 'flex';
+  if (!document.getElementById('board')) $('gameScreen').innerHTML = `<div style="display:flex; flex-direction:column; height:100%;"><div class="game-topbar"><div>🪙 <span id="gGold">0</span> <span id="noGoldWarn" style="display:none; color:var(--danger); font-size:12px; font-weight:800; margin-left:5px;">(мало)</span></div><div class="turn-badge" style="background: transparent; border: none; padding: 0;"><div style="color: var(--accent); font-size: 14px;">Вы: <span id="gP1Name">Ник</span></div><div class="vs-text">VS</div><div style="color: var(--danger); font-size: 14px;">Враг: <span id="gP2Name">Ник</span></div></div><div id="gTurnText" class="turn-badge my-turn">Ваш ход</div></div><div class="game-area"><canvas id="board"></canvas><div class="emote-panel" id="emotePanel"><div class="emote-btn" onclick="sendEmote('🤣')">🤣</div><div class="emote-btn" onclick="sendEmote('😂')">😂</div><div class="emote-btn" onclick="sendEmote('😘')">😘</div><div class="emote-btn" onclick="sendEmote('🎁')">🎁</div><div class="emote-btn" onclick="sendEmote('😫')">😫</div><div class="emote-btn" onclick="sendEmote('😭')">😭</div><div class="emote-btn" onclick="sendEmote('🥶')">🥶</div></div></div><div class="game-bottom"><div style="display:flex; gap:10px;"><button class="btn danger" onclick="surrender()">Сдаться</button><button class="btn glass" onclick="toggleEmotes()">😊 Смайлы</button></div><button class="btn primary" onclick="endTurn()" id="endTurnBtn">Завершить ход</button></div></div>`;
+  canvas = $('board'); ctx = canvas.getContext('2d');
+  setTimeout(() => {
+    const sz = Math.min(canvas.parentElement.clientWidth, canvas.parentElement.clientHeight) - 40; canvas.width = sz; canvas.height = sz;
+    game = lobbyCode ? db.lobbies[lobbyCode].gameState : initGameState([currentUser.login, 'AI']);
+    
+    $('gP1Name').textContent = getDisplayName(game.p1);
+    $('gP2Name').textContent = game.p2 === 'AI' ? '🤖 Бот' : getDisplayName(game.p2);
+
+    updateGameUI(); drawGame(); if (game.p2 === 'AI' && game.turn === 1) setTimeout(aiTurn, 1000);
+  }, 50);
+  
+  canvas.onclick = (e) => {
+    if (!game || game.winner !== undefined) return; 
+    const myTurn = (game.turn === 0 && currentUser.login === game.p1) || (game.turn === 1 && currentUser.login === game.p2); 
+    if (!myTurn) return toast('Не ваш ход!', 'error');
+
+    const r = canvas.getBoundingClientRect(), cell = canvas.width / game.size, x = Math.floor((e.clientX - r.left) / cell), y = Math.floor((e.clientY - r.top) / cell), idx = y * game.size + x;
+    if (x < 0 || x >= game.size || y < 0 || y >= game.size) return; 
+    const t = game.tiles[idx], myId = currentUser.login === game.p1 ? 0 : 1;
+    
+    if (t.owner === myId) { 
+      if (game.gold[myId] < 2) return toast('Мало золота!', 'error');
+      game.gold[myId] -= 2; t.def++; 
+    } else { 
+      let adj = false; 
+      for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) { const nx = t.x + dx, ny = t.y + dy; if (nx>=0 && nx<game.size && ny>=0 && ny<game.size && game.tiles[ny*game.size+nx].owner === myId) adj = true; } 
+      if (!adj) return toast('Не граничит с вашей территорией!', 'error');
+      const cost = 2 + (t.type === 'forest' ? 2 : 0) + t.def; 
+      if (game.gold[myId] < cost) return toast(`Мало золота! Нужно ${cost}`, 'error');
+      game.gold[myId] -= cost; t.owner = myId; t.def = 0; 
+    }
+    updateGameUI(); 
+    checkWin();
+    if (currentUser.lobby && game) { db.lobbies[currentUser.lobby].gameState = game; saveDB(); }
+  };
+}
+
+function updateGameUI() { 
+  if (!game || !currentUser) return; 
+  const myTurn = (game.turn === 0 && currentUser.login === game.p1) || (game.turn === 1 && currentUser.login === game.p2), myId = currentUser.login === game.p1 ? 0 : 1; 
+  let tl = 0; game.tiles.forEach(t => { if (t.owner === myId) tl++; }); 
+  if($('gGold')) $('gGold').textContent = game.gold[myId]; 
+  if($('noGoldWarn')) {
+      if (game.gold[myId] < 2) $('noGoldWarn').style.display = 'inline';
+      else $('noGoldWarn').style.display = 'none';
+  }
+  if($('gTiles')) $('gTiles').textContent = tl; 
+  const tb = $('gTurnText');
+  if(tb) {
+      if(game.winner !== undefined) { tb.textContent = 'Игра окончена'; tb.className = 'turn-badge'; }
+      else { tb.textContent = myTurn ? 'Ваш ход' : 'Ход врага...'; tb.className = 'turn-badge ' + (myTurn ? 'my-turn' : 'enemy-turn'); }
+  }
+  if($('endTurnBtn')) $('endTurnBtn').disabled = !myTurn || game.winner !== undefined; 
+}
+
+function drawGame() { 
+  if (!game) return; 
+  const cell = canvas.width / game.size; ctx.clearRect(0, 0, canvas.width, canvas.height); 
+  const C = { plain: '#1e2433', gold: '#332b18', forest: '#16261a' }, P = ['#4a8cff', '#ff5c5c']; 
+  game.tiles.forEach(t => { 
+    const cx = t.x * cell, cy = t.y * cell; ctx.fillStyle = C[t.type]; ctx.fillRect(cx, cy, cell, cell); ctx.strokeStyle = '#2a3347'; ctx.strokeRect(cx, cy, cell, cell); 
+    if (t.owner !== -1) { ctx.fillStyle = P[t.owner]; ctx.globalAlpha = 0.4; ctx.fillRect(cx, cy, cell, cell); ctx.globalAlpha = 1; if (t.def > 0) { ctx.fillStyle = '#fff'; ctx.font = `bold ${cell*0.4}px Inter`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(t.def, cx + cell/2, cy + cell/2); } } 
+  }); 
+  requestAnimationFrame(drawGame); 
+}
+
+function endTurn() { 
+  if (!game || game.winner !== undefined) return; 
+  const myId = currentUser.login === game.p1 ? 0 : 1;
+  game.tiles.forEach(t => { if (t.owner === myId && t.type === 'gold') game.gold[myId]++; });
+  game.gold[myId] += 2; 
+  game.turn = game.turn === 0 ? 1 : 0; 
+  updateGameUI(); 
+  if (currentUser.lobby) { db.lobbies[currentUser.lobby].gameState = game; saveDB(); }
+  if (game.p2 === 'AI' && game.turn === 1) setTimeout(aiTurn, 1000); 
+}
+
+function aiTurn() { 
+  if (!game || game.turn !== 1 || game.winner !== undefined) return; 
+  const p = 1; let b = null; 
+  game.tiles.forEach((t, i) => { 
+    if (t.owner === p) return; let a = false; 
+    for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) { const nx = t.x + dx, ny = t.y + dy; if (nx>=0 && nx<game.size && ny>=0 && ny<game.size && game.tiles[ny*game.size+nx].owner === p) a = true; } 
+    if (!a) return; const c = 2 + (t.type === 'forest' ? 2 : 0) + t.def; if (game.gold[p] < c) return; let s = 10 - c; if (t.type === 'gold') s += 10; if (!b || s > b.s) b = { i, s, c }; 
+  }); 
+  if (b) { game.gold[p] -= b.c; game.tiles[b.i].owner = p; game.tiles[b.i].def = 0; updateGameUI(); } 
+  setTimeout(() => { 
+    game.tiles.forEach(t => { if (t.owner === 1 && t.type === 'gold') game.gold[1]++; });
+    game.gold[1] += 2; game.turn = 0; 
+    game.tiles.forEach(t => { if (t.owner === 0 && t.type === 'gold') game.gold[0]++; }); 
+    game.gold[0] += 2; updateGameUI(); 
+  }, 1000); 
+}
+
+function checkWin() {
+  if (!game) return;
+  let p0 = 0, p1 = 0;
+  game.tiles.forEach(t => { if(t.owner === 0) p0++; if(t.owner === 1) p1++; });
+  if (p0 >= 60 || p1 >= 60) {
+    game.winner = p0 >= 60 ? 0 : 1;
+    if (currentUser.lobby) {
+      db.lobbies[currentUser.lobby].gameState = game; saveDB();
+    } else {
+      const isMe = game.winner === 0;
+      if (isMe) { 
+          currentUser.wins++; 
+          saveMatchResult('🤖 Бот', true); // Запись победы над ботом
+          saveDB(); 
+          toast('ПОБЕДА! Вы захватили 60%!', 'success'); 
+      } 
+      else { 
+          saveMatchResult('🤖 Бот', false); // Запись поражения от бота
+          saveDB();
+          toast('Вы проиграли...', 'error'); 
+      }
+      setTimeout(() => exitGame(), 2000);
+    }
+  }
+}
+
+setInterval(() => {
+  if (game && game.winner !== undefined && currentUser.lobby) {
+    const isMe = (game.winner === 0 && currentUser.login === game.p1) || (game.winner === 1 && currentUser.login === game.p2);
+    const enemy = game.winner === 0 ? game.p2 : game.p1;
+    
+    if (isMe) { 
+        currentUser.wins++; 
+        saveMatchResult(getDisplayName(enemy), true); // Запись победы в мультиплеере
+        saveDB(); 
+        toast('ПОБЕДА!', 'success'); 
+    } 
+    else { 
+        saveMatchResult(getDisplayName(enemy), false); // Запись поражения в мультиплеере
+        saveDB();
+        toast('Вы проиграли...', 'error'); 
+    }
+    setTimeout(() => exitGame(), 2000);
+  }
+}, 1000);
+
+function surrender() { 
+    if (!game) return; 
+    // Если сдался, записываем поражение
+    if (currentUser.lobby) {
+        const enemy = currentUser.login === game.p1 ? game.p2 : game.p1;
+        saveMatchResult(getDisplayName(enemy), false);
+    } else {
+        saveMatchResult('🤖 Бот', false);
+    }
+    saveDB();
+    toast('Вы сдались...', 'error'); 
+    setTimeout(() => exitGame(), 1000); 
+}
+function exitGame() { if (currentUser?.lobby && db.lobbies[currentUser.lobby]) { delete db.lobbies[currentUser.lobby]; currentUser.lobby = null; saveDB(); } game = null; $('gameScreen').style.display = 'none'; showMainMenu(); }
+
+/* === СМАЙЛЫ === */
+function toggleEmotes() {
+    const panel = $('emotePanel');
+    if (panel) panel.classList.toggle('show');
+}
+
+function sendEmote(emoji) {
+  if (!currentUser.lobby) return;
+  db.lobbies[currentUser.lobby].lastEmote = { user: currentUser.login, emoji: emoji, timestamp: Date.now() };
+  saveDB(); 
+  showEmoteAnimation(emoji);
+  
+  const panel = $('emotePanel');
+  if (panel) panel.classList.remove('show');
+}
+function showEmoteAnimation(emoji) {
+  const el = $('emoteDisplay'); el.textContent = emoji; el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+}
+
+// Запуск
+updateAuthUI();
+const saved = localStorage.getItem('tw_user');
+if (saved) {
+  setTimeout(() => { if (db.users && db.users[saved]) { currentUser = db.users[saved]; showMainMenu(); } else { $('authScreen').classList.remove('hidden'); } }, 1500);
+} else { $('authScreen').classList.remove('hidden'); }
+</script>
+</body>
+</html>
