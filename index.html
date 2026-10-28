@@ -58,6 +58,7 @@
   .avatar-wrap.frame-gold { background: linear-gradient(45deg, #FFD700, #FFA500, #FFD700); box-shadow: 0 0 10px rgba(255,215,0,0.5); }
   .avatar-wrap.frame-fire { background: linear-gradient(45deg, #ff0000, #ff8c00, #ff0000); box-shadow: 0 0 15px rgba(255,0,0,0.6); animation: pulse 2s infinite; }
   .avatar-wrap.frame-blood { background: linear-gradient(135deg, #8a0303, #ff0000, #8a0303); box-shadow: 0 0 20px rgba(255,0,0,0.8); }
+  .avatar-wrap.frame-dev { background: linear-gradient(135deg, #00f2fe, #4facfe); box-shadow: 0 0 20px rgba(0,242,254,0.8); }
   
   .avatar-wrap.frame-blood::before, .avatar-wrap.frame-blood::after { content: ''; position: absolute; background: #8a0303; border-radius: 50%; }
   .avatar-wrap.frame-blood::before { width: 6px; height: 12px; top: -2px; right: 2px; box-shadow: 0 3px 0 #8a0303; }
@@ -185,6 +186,17 @@
   .news-title { font-weight: 800; font-size: 16px; margin-bottom: 5px; color: var(--accent); }
   .news-text { font-size: 13px; line-height: 1.5; }
 
+  /* ИСТОРИЯ БОЕВ */
+  .history-item { background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+  .history-win { border-left: 4px solid var(--success); }
+  .history-loss { border-left: 4px solid var(--danger); }
+  .history-info { display: flex; flex-direction: column; gap: 4px; }
+  .history-enemy { font-weight: 800; font-size: 14px; }
+  .history-date { font-size: 11px; color: var(--dim); }
+  .history-result { font-weight: 900; font-size: 14px; }
+  .result-win { color: var(--success); }
+  .result-loss { color: var(--danger); }
+
   /* НАСТРОЙКИ */
   .settings-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--border); }
   .toggle-btn { padding: 8px 16px; border-radius: 8px; font-weight: 800; cursor: pointer; border: none; transition: 0.2s; }
@@ -215,8 +227,8 @@
 
   /* КРОППЕР АВАТАРКИ */
   #cropModal { z-index: 2000; }
-  .crop-container { width: 250px; height: 250px; margin: 0 auto 20px auto; position: relative; overflow: hidden; border-radius: 50%; border: 4px solid var(--accent); background: #000; cursor: move; }
-  #cropImage { position: absolute; transform-origin: top left; pointer-events: none; }
+  .crop-container { width: 250px; height: 250px; margin: 0 auto 20px auto; position: relative; overflow: hidden; border-radius: 50%; border: 4px solid var(--accent); background: #000; cursor: move; box-sizing: border-box; }
+  #cropImage { position: absolute; transform-origin: center center; pointer-events: none; max-width: none; user-select: none; }
   .crop-controls { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
   .crop-controls input[type=range] { flex: 1; }
 
@@ -293,6 +305,7 @@
   
   <div class="menu-right">
     <div class="side-btn glass" id="btnAdminPanel" style="display:none; background:rgba(245,184,61,0.2); border-color:var(--gold); color:var(--gold);" onclick="openModal('adminModal')">👑 Админ-панель</div>
+    <div class="side-btn glass" onclick="openModal('historyModal')">📜 История боев</div>
     <div class="side-btn glass" onclick="openModal('chatModal')">💬 Чат <div class="notif-dot" id="notifChatDot">0</div></div>
     <div class="side-btn glass" onclick="openModal('newsModal')">📰 Новости</div>
     <div class="side-btn glass" onclick="openModal('friendsModal')">👥 Друзья <div class="notif-dot" id="notifDotBtn">0</div></div>
@@ -374,6 +387,17 @@
   </div>
 </div>
 
+<!-- ИСТОРИЯ БОЕВ -->
+<div class="overlay-modal hidden" id="historyModal">
+  <div class="modal glass">
+    <h2 style="text-align:center; margin-bottom:20px;">📜 История боев</h2>
+    <div id="historyList" style="max-height: 350px; overflow-y: auto;">
+      <!-- Список боев -->
+    </div>
+    <button class="btn primary" onclick="closeModal('historyModal')" style="width:100%; margin-top:10px;">Закрыть</button>
+  </div>
+</div>
+
 <div class="overlay-modal hidden" id="chatModal">
   <div class="modal glass large">
     <h2 style="text-align:center; margin-bottom:20px;">💬 Чат</h2>
@@ -445,8 +469,8 @@
     <div style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
       <div class="news-item">
         <div class="news-date">Сегодня</div>
-        <div class="news-title">Обновление 2.1</div>
-        <div class="news-text">Рамки в профиле теперь выглядят как сами рамки, а не аватарки. Рамки "Золото" и "Огонь" заблокированы до получения в Battle Pass. Рамка "helloween26" доступна всем!</div>
+        <div class="news-title">Обновление 2.2</div>
+        <div class="news-text">Исправлена обрезка аватарок! Добавлен титул "Разработчик" для создателя игры. Внедрена система "История боев" — все ваши матчи теперь записываются.</div>
       </div>
     </div>
     <button class="btn primary" onclick="closeModal('newsModal')" style="width:100%; margin-top:20px;">Закрыть</button>
@@ -550,6 +574,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const firebaseDB = firebase.database().ref('game_data');
 
+// ТВОЙ НИК ДЛЯ АДМИНКИ И ТИТУЛА
 const ADMIN_USERNAME = 't3s1q'; 
 
 let db = { users: {}, clans: {}, messages: {}, lobbies: {} };
@@ -570,12 +595,12 @@ const BP_REWARDS = [
   { level: 7, type: 'frame', val: 'frame-fire', icon: '🔴', name: 'Рамка: Огонь' }
 ];
 
-// Доступные рамки
 const FRAMES_DB = [
     { val: 'none', name: 'Без рамки', desc: 'Стандартная аватарка без рамки.', class: '' },
     { val: 'frame-gold', name: 'Золото', desc: 'Получено в Battle Pass (Уровень 6).', class: 'frame-gold', reqLvl: 6 },
     { val: 'frame-fire', name: 'Огонь', desc: 'Получено в Battle Pass (Уровень 7).', class: 'frame-fire', reqLvl: 7 },
-    { val: 'frame-blood', name: 'helloween26', desc: 'Можно было получить во время события: helloween 2026 year', class: 'frame-blood' }
+    { val: 'frame-blood', name: 'helloween26', desc: 'Можно было получить во время события: helloween 2026 year', class: 'frame-blood' },
+    { val: 'frame-dev', name: 'Разработчик', desc: 'Выдается только создателю игры.', class: 'frame-dev', adminOnly: true }
 ];
 
 let isBgAnimationEnabled = localStorage.getItem('bgAnim') !== 'false';
@@ -604,7 +629,6 @@ function getDisplayName(login) {
     return `${clanTag}${u.name}`;
 }
 
-// Функция для отрисовки аватарки с рамкой
 function getAvatarHtml(login, size = '40px', fontSize = '24px') {
     const u = db.users[login];
     if (!u) return `<div class="avatar-box" style="width:${size}; height:${size}; font-size:${fontSize};">👤</div>`;
@@ -616,6 +640,7 @@ function getAvatarHtml(login, size = '40px', fontSize = '24px') {
     if (u.frame === 'frame-gold') frameClass = 'frame-gold';
     if (u.frame === 'frame-fire') frameClass = 'frame-fire';
     if (u.frame === 'frame-blood') frameClass = 'frame-blood';
+    if (u.frame === 'frame-dev') frameClass = 'frame-dev';
 
     return `<div class="avatar-wrap ${frameClass}">
                 <div class="avatar-box" style="width:${size}; height:${size}; font-size:${fontSize}; border:none;">${inner}</div>
@@ -655,6 +680,7 @@ firebaseDB.on('value', (snapshot) => {
     if (!$('clansModal').classList.contains('hidden')) { if (currentUser.clanId) renderClanView(); else renderClans(); }
     if (!$('lobbiesModal').classList.contains('hidden')) renderLobbies();
     if (!$('adminModal').classList.contains('hidden')) renderAdminPanel();
+    if (!$('historyModal').classList.contains('hidden')) renderHistory();
     
     if (currentUser.lobby && db.lobbies[currentUser.lobby] && !game) {
       const lobby = db.lobbies[currentUser.lobby];
@@ -718,7 +744,7 @@ function checkNotifications() {
 
 function toast(m, type = '') { const el = $('toast'); el.textContent = m; el.className = 'toast show ' + type; clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 2000); }
 
-/* === КРОППЕР АВАТАРКИ === */
+/* === КРОППЕР АВАТАРКИ (ИСПРАВЛЕННЫЙ) === */
 function startCrop(input, target) {
     if (input.files && input.files[0]) {
         const file = input.files[0];
@@ -737,13 +763,30 @@ function startCrop(input, target) {
                 cropPosX = 0;
                 cropPosY = 0;
                 $('cropZoom').value = 1;
-                updateCropImage();
+                
+                // Ждем отрисовки, чтобы отцентрировать
+                setTimeout(() => {
+                    centerImage();
+                }, 50);
             };
             cropImg.src = e.target.result;
         };
         reader.readAsDataURL(file);
         input.value = ''; // Сброс
     }
+}
+
+function centerImage() {
+    const imgEl = $('cropImage');
+    // Центрируем картинку внутри контейнера (250x250)
+    const containerW = 250;
+    const containerH = 250;
+    
+    // Изначально ставим по центру
+    cropPosX = (containerW - imgEl.clientWidth) / 2;
+    cropPosY = (containerH - imgEl.clientHeight) / 2;
+    
+    updateCropImage();
 }
 
 function updateCropImage() {
@@ -788,15 +831,21 @@ function applyCrop() {
     canvas.width = size; canvas.height = size;
     const ctx = canvas.getContext('2d');
     
-    // Отрисовка с учетом смещения и масштаба
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, size, size);
     
-    // Рассчитываем координаты
     const scaleFactor = size / 250; // Контейнер 250x250
-    ctx.translate(cropPosX * scaleFactor + size/2, cropPosY * scaleFactor + size/2);
+    
+    // Переносим начало координат в центр
+    ctx.translate(size/2, size/2);
     ctx.scale(cropScale, cropScale);
-    ctx.drawImage(cropImg, -cropImg.width/2, -cropImg.height/2);
+    
+    // Координаты смещения (учитывая, что мы хотим обрезать центр)
+    // Так как картинка имеет свои размеры, а мы её двигаем, нужно вычесть её половину
+    const dx = (cropPosX * scaleFactor) - (size/2) / cropScale + (cropImg.width/2);
+    const dy = (cropPosY * scaleFactor) - (size/2) / cropScale + (cropImg.height/2);
+    
+    ctx.drawImage(cropImg, -cropImg.width/2 + (cropPosX * scaleFactor) / cropScale, -cropImg.height/2 + (cropPosY * scaleFactor) / cropScale);
     
     const base64 = canvas.toDataURL('image/jpeg', 0.8);
     
@@ -889,7 +938,9 @@ $('authBtn').onclick = () => {
   
   if (authMode === 'register') {
     if (db.users[login]) return toast('Логин занят', 'error');
-    db.users[login] = { login, pass, name: login, avatar: window.tempAuthAvatar || '👤', exp: 0, wins: 0, friends: [], requests: [], sentRequests: [], notifs: [], clanId: null, lobby: null, title: 'Рядовой', bg: 'default', frame: 'none', unlocked: [], banned: false };
+    // Если регается создатель, сразу даем ему титул и рамку
+    let isDev = (login === ADMIN_USERNAME);
+    db.users[login] = { login, pass, name: login, avatar: window.tempAuthAvatar || '👤', exp: 0, wins: 0, friends: [], requests: [], sentRequests: [], notifs: [], clanId: null, lobby: null, title: isDev ? 'Разработчик' : 'Рядовой', bg: 'default', frame: isDev ? 'frame-dev' : 'none', unlocked: [], history: [], banned: false };
     window.tempAuthAvatar = null;
     saveDB(); 
     loginUser(login);
@@ -938,8 +989,54 @@ function openModal(id) {
   if (id === 'battlePassModal') renderBattlePass();
   if (id === 'settingsModal') applySettings();
   if (id === 'adminModal') renderAdminPanel();
+  if (id === 'historyModal') renderHistory();
 }
 function closeModal(id) { $(id).classList.add('hidden'); }
+
+/* === ИСТОРИЯ БОЕВ === */
+function renderHistory() {
+    const list = $('historyList');
+    const history = currentUser.history || [];
+    
+    if (history.length === 0) {
+        list.innerHTML = '<div style="color:var(--dim); text-align:center; padding:20px;">Вы еще не сыграли ни одного боя.</div>';
+        return;
+    }
+
+    // Сортируем от новых к старым
+    const sorted = [...history].reverse();
+
+    list.innerHTML = sorted.map(h => {
+        const isWin = h.result === 'win';
+        return `<div class="history-item ${isWin ? 'history-win' : 'history-loss'}">
+            <div class="history-info">
+                <div class="history-enemy">Против: ${h.enemy}</div>
+                <div class="history-date">${h.date}</div>
+            </div>
+            <div class="history-result ${isWin ? 'result-win' : 'result-loss'}">${isWin ? 'ПОБЕДА' : 'ПОРАЖЕНИЕ'}</div>
+        </div>`;
+    }).join('');
+}
+
+function saveMatchResult(enemyName, isWin) {
+    if (!currentUser) return;
+    if (!currentUser.history) currentUser.history = [];
+    
+    const now = new Date();
+    const dateStr = `${now.getDate().toString().padStart(2,'0')}.${(now.getMonth()+1).toString().padStart(2,'0')}.${now.getFullYear()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+    
+    currentUser.history.push({
+        enemy: enemyName,
+        result: isWin ? 'win' : 'loss',
+        date: dateStr
+    });
+    
+    // Ограничим историю 20 последними боями
+    if (currentUser.history.length > 20) currentUser.history.shift();
+
+    saveDB();
+}
+/* =============== */
 
 /* === АДМИНКА === */
 function switchAdminTab(tab) {
@@ -1017,6 +1114,12 @@ function adminWipeAllFriends() {
 /* === ТИТУЛЫ И РАМКИ === */
 function renderTitleList() {
   const list = $('titleList'); let titles = ['Рядовой'];
+  
+  // Если админ - добавляем титул разработчика
+  if (currentUser.login === ADMIN_USERNAME && !titles.includes('Разработчик')) {
+      titles.push('Разработчик');
+  }
+
   if (currentUser.unlocked) currentUser.unlocked.forEach(lvl => { const r = BP_REWARDS.find(x => x.level === lvl); if (r && r.type === 'title') titles.push(r.val); });
   list.innerHTML = titles.map(t => `<div class="title-item ${currentUser.title === t ? 'active' : ''}" onclick="selectTitle('${t}')">${t}</div>`).join('');
 }
@@ -1025,16 +1128,13 @@ function selectTitle(title) { currentUser.title = title; saveDB(); showMainMenu(
 function renderFrameList() {
   const list = $('frameSelector'); 
   list.innerHTML = FRAMES_DB.map(f => {
-    // Проверяем, открыта ли рамка
     let isUnlocked = true;
-    if (f.reqLvl && (!currentUser.unlocked || !currentUser.unlocked.includes(f.reqLvl))) {
-        isUnlocked = false;
-    }
+    if (f.reqLvl && (!currentUser.unlocked || !currentUser.unlocked.includes(f.reqLvl))) isUnlocked = false;
+    if (f.adminOnly && currentUser.login !== ADMIN_USERNAME) isUnlocked = false;
 
     const isActive = currentUser.frame === f.val;
     const lockHtml = isUnlocked ? '' : `<div class="frame-lock">🔒</div>`;
     
-    // Пустой кружок для превью
     return `<div class="frame-option ${isActive ? 'active' : ''} ${isUnlocked ? '' : 'locked'}" onclick="selectFrame('${f.val}', ${isUnlocked})">
         ${lockHtml}
         <div class="frame-preview ${f.class}">
@@ -1044,15 +1144,13 @@ function renderFrameList() {
     </div>`;
   }).join('');
   
-  // Обновляем описание
   const activeFrame = FRAMES_DB.find(f => f.val === currentUser.frame) || FRAMES_DB[0];
   $('frameDescription').textContent = activeFrame.desc;
 }
 
 function selectFrame(frameVal, isUnlocked) { 
     if (!isUnlocked) {
-        const frameInfo = FRAMES_DB.find(f => f.val === frameVal);
-        return toast(`Сначала получите эту рамку в Battle Pass!`, 'error');
+        return toast(`Сначала получите эту рамку!`, 'error');
     }
     currentUser.frame = frameVal; saveDB(); showMainMenu(); 
     $('pAvatarWrap').outerHTML = getAvatarHtml(currentUser.login, '70px', '36px').replace('class="avatar-wrap', 'id="pAvatarWrap" class="avatar-wrap');
@@ -1365,8 +1463,17 @@ function checkWin() {
       db.lobbies[currentUser.lobby].gameState = game; saveDB();
     } else {
       const isMe = game.winner === 0;
-      if (isMe) { currentUser.wins++; saveDB(); toast('ПОБЕДА! Вы захватили 60%!', 'success'); } 
-      else { toast('Вы проиграли...', 'error'); }
+      if (isMe) { 
+          currentUser.wins++; 
+          saveMatchResult('🤖 Бот', true); // Запись победы над ботом
+          saveDB(); 
+          toast('ПОБЕДА! Вы захватили 60%!', 'success'); 
+      } 
+      else { 
+          saveMatchResult('🤖 Бот', false); // Запись поражения от бота
+          saveDB();
+          toast('Вы проиграли...', 'error'); 
+      }
       setTimeout(() => exitGame(), 2000);
     }
   }
@@ -1375,13 +1482,36 @@ function checkWin() {
 setInterval(() => {
   if (game && game.winner !== undefined && currentUser.lobby) {
     const isMe = (game.winner === 0 && currentUser.login === game.p1) || (game.winner === 1 && currentUser.login === game.p2);
-    if (isMe) { currentUser.wins++; saveDB(); toast('ПОБЕДА!', 'success'); } 
-    else { toast('Вы проиграли...', 'error'); }
+    const enemy = game.winner === 0 ? game.p2 : game.p1;
+    
+    if (isMe) { 
+        currentUser.wins++; 
+        saveMatchResult(getDisplayName(enemy), true); // Запись победы в мультиплеере
+        saveDB(); 
+        toast('ПОБЕДА!', 'success'); 
+    } 
+    else { 
+        saveMatchResult(getDisplayName(enemy), false); // Запись поражения в мультиплеере
+        saveDB();
+        toast('Вы проиграли...', 'error'); 
+    }
     setTimeout(() => exitGame(), 2000);
   }
 }, 1000);
 
-function surrender() { if (!game) return; toast('Вы сдались...', 'error'); setTimeout(() => exitGame(), 1000); }
+function surrender() { 
+    if (!game) return; 
+    // Если сдался, записываем поражение
+    if (currentUser.lobby) {
+        const enemy = currentUser.login === game.p1 ? game.p2 : game.p1;
+        saveMatchResult(getDisplayName(enemy), false);
+    } else {
+        saveMatchResult('🤖 Бот', false);
+    }
+    saveDB();
+    toast('Вы сдались...', 'error'); 
+    setTimeout(() => exitGame(), 1000); 
+}
 function exitGame() { if (currentUser?.lobby && db.lobbies[currentUser.lobby]) { delete db.lobbies[currentUser.lobby]; currentUser.lobby = null; saveDB(); } game = null; $('gameScreen').style.display = 'none'; showMainMenu(); }
 
 /* === СМАЙЛЫ === */
