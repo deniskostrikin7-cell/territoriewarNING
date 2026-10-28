@@ -669,12 +669,15 @@ firebaseDB.on('value', (snapshot) => {
   if (dbChanged) saveDB();
 
   if (currentUser && db.users[currentUser.login] && db.users[currentUser.login].banned) {
-      toast('ВЫ ЗАБАНЕНЫ АДМИНИСТРАТОРОМ!', 'error');
-      localStorage.removeItem('tw_user');
-      currentUser = null;
-      $('authScreen').classList.remove('hidden');
-      $('mainMenu').classList.add('hidden');
-      $('gameScreen').style.display = 'none';
+      let banReason = db.users[currentUser.login].banReason || "Без указания причины";
+      toast(`ВЫ ЗАБАНЕНЫ! Причина: ${banReason}`, 'error');
+      setTimeout(() => {
+          localStorage.removeItem('tw_user');
+          currentUser = null;
+          $('authScreen').classList.remove('hidden');
+          $('mainMenu').classList.add('hidden');
+          $('gameScreen').style.display = 'none';
+      }, 3000);
       return;
   }
 
@@ -731,7 +734,6 @@ function checkNotifications() {
         currentUser.friends.forEach(f => {
             const key = [currentUser.login, f].sort().join(':');
             const msgs = db.messages[key] || [];
-            // Проверяем, есть ли непрочитанные (начиная с индекса, который сохранен в readChats)
             let startIndex = readChats[f] || 0;
             for (let i = startIndex; i < msgs.length; i++) {
                 if (msgs[i].from !== currentUser.login) unreadChatCount++;
@@ -892,13 +894,13 @@ $('authBtn').onclick = () => {
         }
     }
 
-    db.users[login] = { login, pass, name: login, id: newId, avatar: window.tempAuthAvatar || '👤', exp: 0, wins: 0, friends: [], requests: [], sentRequests: [], notifs: [], clanId: null, lobby: null, title: isDev ? 'Разработчик' : 'Рядовой', bg: 'default', frame: isDev ? 'frame-dev' : 'none', unlocked: [], history: [], banned: false };
+    db.users[login] = { login, pass, name: login, id: newId, avatar: window.tempAuthAvatar || '👤', exp: 0, wins: 0, friends: [], requests: [], sentRequests: [], notifs: [], clanId: null, lobby: null, title: isDev ? 'Разработчик' : 'Рядовой', bg: 'default', frame: isDev ? 'frame-dev' : 'none', unlocked: [], history: [], banned: false, banReason: '' };
     window.tempAuthAvatar = null;
     saveDB(); 
     loginUser(login);
   } else {
     if (!db.users[login] || db.users[login].pass !== pass) return toast('Неверный логин/пароль', 'error');
-    if (db.users[login].banned) return toast('Вы были забанены администратором!', 'error');
+    if (db.users[login].banned) return toast(`Вы были забанены! Причина: ${db.users[login].banReason || 'Не указана'}`, 'error');
     loginUser(login);
   }
 };
@@ -1050,9 +1052,9 @@ function renderAdminPanel() {
         const isBanned = u.banned;
         return `<div class="card" style="margin-bottom:8px;">
             ${getAvatarHtml(u.login, '40px', '20px')}
-            <div class="card-info"><div class="n">${u.name} <span style="font-size:10px; color:var(--dim);">(#${u.id})</span></div><div class="s">${isBanned ? '<span style="color:var(--danger)">ЗАБАНЕН</span>' : 'Активен'}</div></div>
+            <div class="card-info"><div class="n">${u.name} <span style="font-size:10px; color:var(--dim);">(#${u.id})</span></div><div class="s">${isBanned ? `<span style="color:var(--danger)">БАН: ${u.banReason || 'без причины'}</span>` : 'Активен'}</div></div>
             ${u.login === ADMIN_USERNAME ? '<span style="font-size:12px; color:var(--gold); font-weight:800;">ВЫ</span>' : 
-              `<button class="btn ${isBanned ? 'success' : 'danger'}" onclick="toggleBan('${u.login}')" style="padding:8px 12px; font-size:12px; margin-right: 5px;">${isBanned ? 'Разблок' : 'Бан'}</button>
+              `<button class="btn ${isBanned ? 'success' : 'danger'}" onclick="promptBan('${u.login}')" style="padding:8px 12px; font-size:12px; margin-right: 5px;">${isBanned ? 'Разблок' : 'Бан'}</button>
                <button class="btn danger" onclick="adminDeleteUser('${u.login}')" style="padding:8px 12px; font-size:12px; border-color: #ff0000; color: #ff0000;">🗑️</button>`}
         </div>`;
     }).join('');
@@ -1066,12 +1068,23 @@ function renderAdminPanel() {
     `).join('');
 }
 
-function toggleBan(login) {
+// Вызов окна бана
+function promptBan(login) {
     if (login === ADMIN_USERNAME) return toast('Нельзя забанить себя!', 'error');
     const user = db.users[login]; if (!user) return;
-    user.banned = !user.banned; saveDB();
-    toast(user.banned ? 'Игрок забанен' : 'Игрок разбанен', user.banned ? 'error' : 'success');
-    renderAdminPanel();
+    
+    if (user.banned) {
+        // Разбан
+        user.banned = false; user.banReason = '';
+        saveDB(); toast('Игрок разбанен', 'success'); renderAdminPanel();
+    } else {
+        // Бан
+        const reason = prompt("Введите причину бана для " + login + ":", "Нарушение правил");
+        if (reason === null) return; // отмена
+        user.banned = true; 
+        user.banReason = reason || "Без указания причины";
+        saveDB(); toast('Игрок забанен', 'error'); renderAdminPanel();
+    }
 }
 
 function adminDeleteUser(login) {
